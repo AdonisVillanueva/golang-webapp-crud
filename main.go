@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/tls"
+	"net"
 	"net/http"
 
 	"github.com/AdonisVillanueva/golang-webapp-crud/controllers"
@@ -19,9 +21,26 @@ func main() {
 
 func getSession() *mgo.Session {
 
-	s, err := mgo.Dial("mongodb+srv://adonisabril:HqcisBUYebRmXh8C@cluster0.busqmrd.mongodb.net/?retryWrites=true&w=majority")
+	tlsConfig := &tls.Config{}
+
+	dialInfo := &mgo.DialInfo{
+		Addrs:    []string{"busqmrd.mongodb.net"},
+		Database: "Cluster0",
+		Username: "adonisabril",
+		Password: "",
+	}
+	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
+		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
+		if err != nil {
+			panic(err)
+		}
+		return conn, err
+	}
+
+	session, err := mgo.DialWithInfo(dialInfo)
 	if err != nil {
 		panic(err)
 	}
-	return s
+
+	return session
 }
